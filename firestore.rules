@@ -1,0 +1,31 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Règle 1 : Les utilisateurs ne peuvent gérer QUE leur propre profil
+    match /users/{userId} {
+      allow read, write: if userId == request.auth.uid;
+    }
+
+    // Règle 2 : Un pressing accède uniquement à SES clients
+    match /customers/{customerId} {
+      allow create: if request.auth != null;
+      allow read, update, delete: 
+        if request.auth.uid == resource.data.pressingId;
+    }
+
+    // Règle 3 : Commandes liées au pressing
+    match /orders/{orderId} {
+      allow create: if request.auth != null;
+      allow read, write: 
+        if request.auth.uid == resource.data.pressingId;
+    }
+
+    // Règle 4 : Services spécifiques au pressing
+    match /services/{serviceId} {
+      allow read: if request.auth != null;
+      allow write: 
+        if request.auth.uid == resource.data.pressingId;
+    }
+  }
+}
